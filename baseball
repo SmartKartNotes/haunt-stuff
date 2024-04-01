@@ -29,7 +29,7 @@ const byte ballButtonPin = 37;    // Pin for the ball button
 const byte strikeButtonPin = 38;  // Pin for the strike button
 const byte outButtonPin = 39;     // Pin for the out button
 const byte resetButtonPin = 40;   // Pin for the reset button
-const byte toggleButtonPin = 41;  // Pin for the toggle button
+const byte toggleButtonPin = 41;  // Pin for the inning button
 
 CRGB leds[NUM_LEDS];
 
