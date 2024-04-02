@@ -3,7 +3,7 @@
 
 #define NUM_LEDS_PER_SEGMENT 3
 #define NUM_LEDS_PER_DIGIT 21
-#define NUM_LEDS 113 // Updated for 5 digits
+#define NUM_LEDS 114 // Updated for 5 digits
 #define DATA_PIN 13
 
 const uint8_t digits[10] = {
