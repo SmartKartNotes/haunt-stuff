@@ -18,17 +18,17 @@ const uint8_t digits[10] = {
     0b01011111  // 9
 };
 
-const byte homeTeamDownPin = 32;
-const byte homeTeamUpPin = 25;
-const byte inningDownPin = 33;
-const byte inningUpPin = 34;
-const byte awayTeamDownPin = 35;
-const byte awayTeamUpPin = 36;
-const byte ballButtonPin = 37;    // Pin for the ball button
-const byte strikeButtonPin = 38;  // Pin for the strike button
-const byte outButtonPin = 39;     // Pin for the out button
-const byte resetButtonPin = 40;   // Pin for the reset button
-const byte toggleButtonPin = 41;  // Pin for the toggle button
+const byte homeTeamDownPin = 12;
+const byte homeTeamUpPin = 13;
+const byte inningDownPin = 11;
+const byte inningUpPin = 10;
+const byte awayTeamDownPin = 9;
+const byte awayTeamUpPin = 8;
+const byte ballButtonPin = 7;    // Pin for the ball button
+const byte strikeButtonPin = 6;  // Pin for the strike button
+const byte outButtonPin = 5;     // Pin for the out button
+const byte resetButtonPin = 4;   // Pin for the reset button
+const byte toggleButtonPin = 2;  // Pin for the inning button
 
 CRGB leds[NUM_LEDS];
 
