@@ -115,15 +115,15 @@ void loop() {
     if (ballButton.released()) {
         ballPressCount++; // Increment the press count
         if (ballPressCount == 1) { // First press
-            leds[106] = CRGB::Green; // Light up LED 106
+            leds[106] = CRGB::Green; // Light up LED 105
         } else if (ballPressCount == 2) { // Second press
-            leds[107] = CRGB::Green; // Light up LED 107
+            leds[107] = CRGB::Green; // Light up LED 106
         } else if (ballPressCount == 3) { // Third press
-            leds[108] = CRGB::Green; // Light up LED 108
+            leds[108] = CRGB::Green; // Light up LED 107
         } else { // Fourth press (reset)
-            leds[106] = CRGB::Black; // Turn off LED 106
-            leds[107] = CRGB::Black; // Turn off LED 107
-            leds[108] = CRGB::Black; // Turn off LED 108
+            leds[106] = CRGB::Black; // Turn off LED 105
+            leds[107] = CRGB::Black; // Turn off LED 106
+            leds[108] = CRGB::Black; // Turn off LED 107
             ballPressCount = 0; // Reset press count
         }
     }
@@ -132,12 +132,12 @@ void loop() {
     if (strikeButton.released()) {
         strikePressCount++; // Increment the press count
         if (strikePressCount == 1) { // First press
-            leds[109] = CRGB::Blue; // Light up LED 109
+            leds[109] = CRGB::Blue; // Light up LED 108
         } else if (strikePressCount == 2) { // Second press
-            leds[110] = CRGB::Blue; // Light up LED 110
+            leds[110] = CRGB::Blue; // Light up LED 109
         } else { // Third press (reset)
-            leds[109] = CRGB::Black; // Turn off LED 109
-            leds[110] = CRGB::Black; // Turn off LED 110
+            leds[109] = CRGB::Black; // Turn off LED 108
+            leds[110] = CRGB::Black; // Turn off LED 109
             strikePressCount = 0; // Reset press count
         }
     }
@@ -146,12 +146,12 @@ void loop() {
     if (outButton.released()) {
         outPressCount++; // Increment the press count
         if (outPressCount == 1) { // First press
-            leds[111] = CRGB::Yellow; // Light up LED 111
+            leds[111] = CRGB::Yellow; // Light up LED 110
         } else if (outPressCount == 2) { // Second press
-            leds[112] = CRGB::Yellow; // Light up LED 112
+            leds[112] = CRGB::Yellow; // Light up LED 111
         } else { // Third press (reset)
-            leds[111] = CRGB::Black; // Turn off LED 111
-            leds[112] = CRGB::Black; // Turn off LED 112
+            leds[111] = CRGB::Black; // Turn off LED 110
+            leds[112] = CRGB::Black; // Turn off LED 111
             outPressCount = 0; // Reset press count
         }
     }
@@ -176,8 +176,8 @@ void loop() {
     // Toggle Button Logic
     if (toggleButton.released()) {
         toggleState = !toggleState; // Toggle the state
-        leds[113] = toggleState ? CRGB::White : CRGB::Black; // Toggle LED 113
-        leds[114] = toggleState ? CRGB::White : CRGB::Black; // Toggle LED 114
+        leds[113] = toggleState ? CRGB::White : CRGB::Black; // Toggle LED 112
+        leds[114] = toggleState ? CRGB::White : CRGB::Black; // Toggle LED 113
     }
 
     setDigit(0, homeTeamCounter / 10); // First digit of home team
