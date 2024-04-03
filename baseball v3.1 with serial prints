@@ -1,0 +1,252 @@
+#include <FastLED.h>
+#include <Bounce2.h>
+
+#define NUM_LEDS_PER_SEGMENT 3   // Number of LEDs per segment in a digit
+#define NUM_LEDS_PER_DIGIT 21    // Total number of LEDs per digit
+#define NUM_LEDS 114             // Total number of LEDs in the display
+#define DATA_PIN 13              // Pin connected to the data line of the LED strip
+
+const uint8_t digits[10] = {
+    0b00001100, // 1
+    0b01110110, // 2
+    0b01011110, // 3
+    0b01001101, // 4
+    0b01011011, // 5
+    0b01111011, // 6
+    0b00001110, // 7
+    0b01111111, // 8
+    0b01011111  // 9
+};
+
+const byte homeTeamDownPin = 14;    // Pin for decrementing home team score
+const byte homeTeamUpPin = 27;      // Pin for incrementing home team score
+const byte inningDownPin = 26;      // Pin for decrementing inning
+const byte inningUpPin = 25;        // Pin for incrementing inning
+const byte awayTeamDownPin = 33;    // Pin for decrementing away team score
+const byte awayTeamUpPin = 32;      // Pin for incrementing away team score
+const byte ballButtonPin = 35;      // Pin for the ball button
+const byte strikeButtonPin = 5;     // Pin for the strike button
+const byte outButtonPin = 18;       // Pin for the out button
+const byte resetButtonPin = 19;     // Pin for the reset button
+const byte toggleButtonPin = 21;    // Pin for the inning button
+
+CRGB leds[NUM_LEDS];  // Array to store LED colors
+
+// Define buttons using Bounce2 library
+Bounce2::Button homeTeamBtnDown = Bounce2::Button();   // Button for decrementing home team score
+Bounce2::Button homeTeamBtnUp = Bounce2::Button();     // Button for incrementing home team score
+Bounce2::Button inningBtnDown = Bounce2::Button();     // Button for decrementing inning
+Bounce2::Button inningBtnUp = Bounce2::Button();       // Button for incrementing inning
+Bounce2::Button awayTeamBtnDown = Bounce2::Button();   // Button for decrementing away team score
+Bounce2::Button awayTeamBtnUp = Bounce2::Button();     // Button for incrementing away team score
+Bounce2::Button ballButton = Bounce2::Button();        // Button for balls
+Bounce2::Button strikeButton = Bounce2::Button();      // Button for strikes
+Bounce2::Button outButton = Bounce2::Button();         // Button for outs
+Bounce2::Button resetButton = Bounce2::Button();       // Button for resetting counters
+Bounce2::Button toggleButton = Bounce2::Button();      // Button for toggling inning state
+
+long homeTeamCounter = 0;       // Counter for the home team score
+long inningCounter = 0;         // Counter for the inning
+long awayTeamCounter = 0;       // Counter for the away team score
+int ballPressCount = 0;         // Counter for ball button presses
+int strikePressCount = 0;       // Counter for strike button presses
+int outPressCount = 0;          // Counter for out button presses
+bool toggleState = false;       // State of toggle button for inning (Top or Bottom)
+
+
+void setDigit(int display, int val) {
+    for (int i = 0; i < NUM_LEDS_PER_DIGIT; i++) {
+        bool isOn = bitRead(digits[val], i / NUM_LEDS_PER_SEGMENT);
+        // Set the LED color accordingly (Red if on, Black if off)
+        leds[display * NUM_LEDS_PER_DIGIT + i] = isOn ? CRGB::Red : CRGB::Black;
+    }
+}
+
+void setup() {
+    Serial.begin(115200); // Initialize Serial communication
+    FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
+
+homeTeamBtnDown.attach(homeTeamDownPin, INPUT_PULLUP);    // Attach the home team down button to its pin and ground, with pull-up resistor enabled
+homeTeamBtnUp.attach(homeTeamUpPin, INPUT_PULLUP);        // Attach the home team up button to its pin and ground, with pull-up resistor enabled
+inningBtnDown.attach(inningDownPin, INPUT_PULLUP);        // Attach the inning down button to its pin and ground, with pull-up resistor enabled
+inningBtnUp.attach(inningUpPin, INPUT_PULLUP);            // Attach the inning up button to its pin and ground, with pull-up resistor enabled
+awayTeamBtnDown.attach(awayTeamDownPin, INPUT_PULLUP);    // Attach the away team down button to its pin and ground, with pull-up resistor enabled
+awayTeamBtnUp.attach(awayTeamUpPin, INPUT_PULLUP);        // Attach the away team up button to its pin and ground, with pull-up resistor enabled
+ballButton.attach(ballButtonPin, INPUT_PULLUP);          // Attach the ball button to its pin and ground, with pull-up resistor enabled
+strikeButton.attach(strikeButtonPin, INPUT_PULLUP);      // Attach the strike button to its pin and ground, with pull-up resistor enabled
+outButton.attach(outButtonPin, INPUT_PULLUP);            // Attach the out button to its pin and ground, with pull-up resistor enabled
+resetButton.attach(resetButtonPin, INPUT_PULLUP);        // Attach the reset button to its pin and ground, with pull-up resistor enabled
+toggleButton.attach(toggleButtonPin, INPUT_PULLUP);      // Attach the toggle button to its pin and ground, with pull-up resistor enabled
+
+}
+
+void processSerialCommand(int command) {
+    switch (command) {
+        case 1:
+            homeTeamCounter = (homeTeamCounter - 1 + 100) % 100;
+            Serial.println("Home team down");
+            break;
+        case 2:
+            homeTeamCounter = (homeTeamCounter + 1) % 100;
+            Serial.println("Home team up");
+            break;
+        case 3:
+            inningCounter = (inningCounter - 1 + 10) % 10;
+            Serial.println("Inning down");
+            break;
+        case 4:
+            inningCounter = (inningCounter + 1) % 10;
+            Serial.println("Inning up");
+            break;
+        case 5:
+            awayTeamCounter = (awayTeamCounter - 1 + 100) % 100;
+            Serial.println("Away team down");
+            break;
+        case 6:
+            awayTeamCounter = (awayTeamCounter + 1) % 100;
+            Serial.println("Away team up");
+            break;
+        case 7:
+            ballPressCount++;
+            if (ballPressCount == 1) {
+                leds[106] = CRGB::Green;
+                Serial.println("Ball button pressed once");
+            } else if (ballPressCount == 2) {
+                leds[107] = CRGB::Green;
+                Serial.println("Ball button pressed twice");
+            } else if (ballPressCount == 3) {
+                leds[108] = CRGB::Green;
+                Serial.println("Ball button pressed thrice");
+            } else {
+                for (int i = 106; i <= 108; i++) {
+                    leds[i] = CRGB::Black;
+                }
+                ballPressCount = 0;
+                Serial.println("Resetting ball count");
+            }
+            break;
+        case 8:
+            strikePressCount++;
+            if (strikePressCount == 1) {
+                leds[109] = CRGB::Blue;
+                Serial.println("Strike button pressed once");
+            } else if (strikePressCount == 2) {
+                leds[110] = CRGB::Blue;
+                Serial.println("Strike button pressed twice");
+            } else {
+                for (int i = 109; i <= 110; i++) {
+                    leds[i] = CRGB::Black;
+                }
+                strikePressCount = 0;
+                Serial.println("Strike button pressed thrice, resetting");
+            }
+            break;
+        case 9:
+            outPressCount++;
+            if (outPressCount == 1) {
+                leds[111] = CRGB::Yellow;
+                Serial.println("Out button pressed once");
+            } else if (outPressCount == 2) {
+                leds[112] = CRGB::Yellow;
+                Serial.println("Out button pressed twice");
+            } else {
+                for (int i = 111; i <= 112; i++) {
+                    leds[i] = CRGB::Black;
+                }
+                outPressCount = 0;
+                Serial.println("Out button pressed thrice, resetting");
+            }
+            break;
+        case 10:
+            for (int i = 106; i <= 112; i++) {
+                leds[i] = CRGB::Black;
+            }
+            ballPressCount = 0;
+            strikePressCount = 0;
+            outPressCount = 0;
+            Serial.println("Reset button pressed, resetting balls, strikes and outs");
+            break;
+        case 11:
+            toggleState = !toggleState;
+            leds[113] = toggleState ? CRGB::White : CRGB::Black;
+            leds[114] = toggleState ? CRGB::White : CRGB::Black;
+            Serial.print("Inning state ");
+            Serial.println(toggleState ? "Top" : "Bottom");
+            break;
+        default:
+            Serial.println("Invalid command");
+            break;
+    }
+}
+
+void loop() {
+    // Check and process serial commands
+    while (Serial.available() > 0) {
+        int command = Serial.parseInt();
+        if (command != 0) {
+            processSerialCommand(command);
+        }
+    }
+
+    // Update button states
+homeTeamBtnDown.update();    // Update the state of the home team down button
+homeTeamBtnUp.update();      // Update the state of the home team up button
+inningBtnDown.update();      // Update the state of the inning down button
+inningBtnUp.update();        // Update the state of the inning up button
+awayTeamBtnDown.update();    // Update the state of the away team down button
+awayTeamBtnUp.update();      // Update the state of the away team up button
+ballButton.update();         // Update the state of the ball button
+strikeButton.update();       // Update the state of the strike button
+outButton.update();          // Update the state of the out button
+resetButton.update();        // Update the state of the reset button
+toggleButton.update();       // Update the state of the toggle button
+
+
+    // Button action logic
+    if (homeTeamBtnDown.fell()) {     // Check for button press
+        processSerialCommand(1);
+    }
+    if (homeTeamBtnUp.fell()) {       // Check for button press
+        processSerialCommand(2);
+    }
+
+    if (inningBtnDown.fell()) {       // Check for button press
+        processSerialCommand(3);
+    }
+    if (inningBtnUp.fell()) {         // Check for button press
+        processSerialCommand(4);
+    }
+
+    if (awayTeamBtnDown.fell()) {      // Check for button press
+        processSerialCommand(5);
+    }
+    if (awayTeamBtnUp.fell()) {        // Check for button press
+        processSerialCommand(6);
+    }
+
+    if (ballButton.fell()) {           // Check for button press
+        processSerialCommand(7);
+    }
+    if (strikeButton.fell()) {         // Check for button press
+        processSerialCommand(8);
+    }
+    if (outButton.fell()) {            // Check for button press
+        processSerialCommand(9);
+    }
+    if (resetButton.fell()) {          // Check for button press
+        processSerialCommand(10);
+    }
+    if (toggleButton.fell()) {         // Check for button press
+        processSerialCommand(11);
+    }
+
+    // Display updated values
+    setDigit(0, homeTeamCounter / 10);   // First digit of home team
+    setDigit(1, homeTeamCounter % 10);   // Second digit of home team
+    setDigit(2, inningCounter);          // Inning
+    setDigit(3, awayTeamCounter / 10);   // First digit of away team
+    setDigit(4, awayTeamCounter % 10);   // Second digit of away team
+
+    FastLED.show();
+    delay(20); // Small delay to debounce buttons and stabilize display
+}
