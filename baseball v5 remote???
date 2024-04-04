@@ -1,0 +1,92 @@
+#include <SPI.h>
+#include <RF24.h>
+
+#define CE_PIN   9
+#define CSN_PIN 10
+
+// Create a unique address for the transmitter
+const byte address[6] = "00001";
+
+RF24 radio(CE_PIN, CSN_PIN); // Create a radio object
+
+const byte homeTeamDownPin = 12;  // Pin for decreasing home team score
+const byte homeTeamUpPin = 13;    // Pin for increasing home team score
+const byte inningDownPin = 11;     // Pin for decreasing inning count
+const byte inningUpPin = 10;       // Pin for increasing inning count
+const byte awayTeamDownPin = 8;    // Pin for decreasing away team score
+const byte awayTeamUpPin = 7;      // Pin for increasing away team score
+const byte ballButtonPin = 6;      // Pin for indicating a ball
+const byte strikeButtonPin = 5;    // Pin for indicating a strike
+const byte outButtonPin = 4;       // Pin for indicating an out
+const byte resetButtonPin = 3;     // Pin for resetting game data
+
+void setup() {
+  Serial.begin(9600);
+  radio.begin(); // Start the radio
+  radio.openWritingPipe(address); // Set the address where we will send the data
+  radio.setPALevel(RF24_PA_LOW); // Set power level
+  radio.stopListening(); // Set as transmitter
+
+  pinMode(homeTeamDownPin, INPUT_PULLUP);
+  pinMode(homeTeamUpPin, INPUT_PULLUP);
+  pinMode(inningDownPin, INPUT_PULLUP);
+  pinMode(inningUpPin, INPUT_PULLUP);
+  pinMode(awayTeamDownPin, INPUT_PULLUP);
+  pinMode(awayTeamUpPin, INPUT_PULLUP);
+  pinMode(ballButtonPin, INPUT_PULLUP);
+  pinMode(strikeButtonPin, INPUT_PULLUP);
+  pinMode(outButtonPin, INPUT_PULLUP);
+  pinMode(resetButtonPin, INPUT_PULLUP);
+}
+
+void loop() {
+  if (digitalRead(homeTeamDownPin) == LOW) {
+    sendData(1); // Send 1 when home team down button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(homeTeamUpPin) == LOW) {
+    sendData(2); // Send 2 when home team up button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(inningDownPin) == LOW) {
+    sendData(3); // Send 3 when inning down button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(inningUpPin) == LOW) {
+    sendData(4); // Send 4 when inning up button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(awayTeamDownPin) == LOW) {
+    sendData(5); // Send 5 when away team down button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(awayTeamUpPin) == LOW) {
+    sendData(6); // Send 6 when away team up button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(ballButtonPin) == LOW) {
+    sendData(7); // Send 7 when ball button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(strikeButtonPin) == LOW) {
+    sendData(8); // Send 8 when strike button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(outButtonPin) == LOW) {
+    sendData(9); // Send 9 when out button is pressed
+    delay(500); // Delay to debounce
+  }
+  if (digitalRead(resetButtonPin) == LOW) {
+    sendData(10); // Send 10 when reset button is pressed
+    delay(500); // Delay to debounce
+  }
+}
+
+void sendData(int data) {
+  bool success = radio.write(&data, sizeof(data)); // Send the data
+  if (success) {
+    Serial.println("Data sent successfully.");
+  } else {
+    Serial.println("Failed to send data.");
+  }
+}
