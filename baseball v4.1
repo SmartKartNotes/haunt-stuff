@@ -1,0 +1,170 @@
+#include <FastLED.h>
+
+// Define constants for LED display configuration
+#define NUM_LEDS_PER_SEGMENT 3 // Number of LEDs per segment in each digit
+#define NUM_LEDS_PER_DIGIT 21  // Total number of LEDs per digit
+#define NUM_LEDS 114           // Total number of LEDs in the display
+#define DATA_PIN 13            // Pin connected to the LED data line
+
+// Binary representation of each digit from 0 to 9
+const uint8_t digits[10] = {
+    0b00111111, // 0
+    0b00001100, // 1
+    0b01110110, // 2
+    0b01011110, // 3
+    0b01001101, // 4
+    0b01011011, // 5
+    0b01111011, // 6
+    0b00001110, // 7
+    0b01111111, // 8
+    0b01011111  // 9
+};
+
+CRGB leds[NUM_LEDS]; // Array to store LED colors
+
+// Counter variables for different game events
+long homeTeamCounter = 0;    // Counter for the home team score
+long inningCounter = 1;      // Counter for the inning
+long awayTeamCounter = 0;    // Counter for the away team score
+int ballPressCount = 0;      // Counter for the number of times the ball button is pressed
+int strikePressCount = 0;    // Counter for the number of times the strike button is pressed
+int outPressCount = 0;       // Counter for the number of times the out button is pressed
+
+void setDigit(int display, int val) {
+    // If the first digit is zero and it's the first digit of a score, skip displaying it
+    if (display == 0 && val == 0) {
+        for (int i = 0; i < NUM_LEDS_PER_DIGIT; i++) {
+            leds[display * NUM_LEDS_PER_DIGIT + i] = CRGB::Black;
+        }
+    } else {
+        for (int i = 0; i < NUM_LEDS_PER_DIGIT; i++) {
+            // Extracting each segment of the digit and setting corresponding LED
+            bool isOn = bitRead(digits[val], i / NUM_LEDS_PER_SEGMENT);
+            leds[display * NUM_LEDS_PER_DIGIT + i] = isOn ? CRGB::Red : CRGB::Black;
+        }
+    }
+}
+
+void setup() {
+    Serial.begin(115200); // Initialize Serial communication
+    FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS); // Initialize FastLED
+}
+
+void processSerialCommand(int command) {
+    switch (command) {
+        case 1:
+            homeTeamCounter = (homeTeamCounter - 1 + 100) % 100;
+            Serial.print("Home team down. Displaying: ");
+            Serial.println(homeTeamCounter);
+            break;
+        case 2:
+            homeTeamCounter = (homeTeamCounter + 1) % 100;
+            Serial.print("Home team up. Displaying: ");
+            Serial.println(homeTeamCounter);
+            break;
+        case 3:
+            inningCounter = (inningCounter - 1 + 8) % 9 + 1; // Decrement inning, loop from 1-9
+            Serial.print("Inning down. Displaying: ");
+            Serial.println(inningCounter);
+            break;
+        case 4:
+            inningCounter = (inningCounter % 9) + 1; // Increment inning, loop from 1-9
+            Serial.print("Inning up. Displaying: ");
+            Serial.println(inningCounter);
+            break;
+        case 5:
+            awayTeamCounter = (awayTeamCounter - 1 + 100) % 100;
+            Serial.print("Away team down. Displaying: ");
+            Serial.println(awayTeamCounter);
+            break;
+        case 6:
+            awayTeamCounter = (awayTeamCounter + 1) % 100;
+            Serial.print("Away team up. Displaying: ");
+            Serial.println(awayTeamCounter);
+            break;
+        case 7:
+            ballPressCount++;
+            if (ballPressCount == 1) {
+                leds[105] = CRGB::Red;
+                Serial.println("Ball button pressed once");
+            } else if (ballPressCount == 2) {
+                leds[106] = CRGB::Red;
+                Serial.println("Ball button pressed twice");
+            } else if (ballPressCount == 3) {
+                leds[107] = CRGB::Red;
+                Serial.println("Ball button pressed thrice");
+            } else {
+                for (int i = 105; i <= 107; i++) {
+                    leds[i] = CRGB::Black;
+                }
+                ballPressCount = 0;
+                Serial.println("Resetting ball count");
+            }
+            break;
+        case 8:
+            strikePressCount++;
+            if (strikePressCount == 1) {
+                leds[108] = CRGB::Red;
+                Serial.println("Strike button pressed once");
+            } else if (strikePressCount == 2) {
+                leds[109] = CRGB::Red;
+                Serial.println("Strike button pressed twice");
+            } else {
+                for (int i = 108; i <= 109; i++) {
+                    leds[i] = CRGB::Black;
+                }
+                strikePressCount = 0;
+                Serial.println("Strike button pressed thrice, resetting");
+            }
+            break;
+        case 9:
+            outPressCount++;
+            if (outPressCount == 1) {
+                leds[110] = CRGB::Red;
+                Serial.println("Out button pressed once");
+            } else if (outPressCount == 2) {
+                leds[111] = CRGB::Red;
+                Serial.println("Out button pressed twice");
+            } else {
+                for (int i = 110; i <= 111; i++) {
+                    leds[i] = CRGB::Black;
+                }
+                outPressCount = 0;
+                Serial.println("Out button pressed thrice, resetting");
+            }
+            break;
+        case 10:
+            for (int i = 105; i <= 109; i++) {
+                leds[i] = CRGB::Black;
+            }
+            ballPressCount = 0;
+            strikePressCount = 0;
+            outPressCount = 0;
+            Serial.println("Reset button pressed, resetting balls and strikes");
+            break;
+        default:
+            Serial.println("Invalid command");
+            break;
+    }
+}
+
+
+void loop() {
+    // Check and process serial commands
+    while (Serial.available() > 0) {
+        int command = Serial.parseInt();
+        if (command != 0) {
+            processSerialCommand(command);
+        }
+    }
+
+    // Display updated values
+    setDigit(0, homeTeamCounter / 10); // First digit of home team
+    setDigit(1, homeTeamCounter % 10); // Second digit of home team
+    setDigit(2, inningCounter);        // Inning
+    setDigit(3, awayTeamCounter / 10); // First digit of away team
+    setDigit(4, awayTeamCounter % 10); // Second digit of away team
+
+    FastLED.show();
+    delay(20); // Small delay to debounce buttons and stabilize display
+}
